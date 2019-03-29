@@ -178,3 +178,95 @@ animate(p, nframes = dim(data.s)[1]/10*3*10+10, fps = 20, end_pause = 10, width 
 anim_save("./output graphs/top10_elos_big.gif")
 animate(p, nframes = dim(data.s)[1]/10*10+10, fps = 12, end_pause = 10, width = 900, height = 600)
 anim_save("./output graphs/top10_elos_medium.gif")
+
+# Dynamic plot, top 20, after 1946  ------------------------------------------
+p2 = ggplot(data.s2, aes(-order, group=countries, colour=countries, fill=countries)) +
+  scale_fill_manual(values = jColors)+
+  geom_tile(aes(y = elos/2, height = elos, width = 0.75), alpha = 0.8, color='black') +
+  labs(x='', y='', title='Top 20 World Football Elo Ratings:  {closest_state}',
+       caption='Data: http://eloratings.net   Author: @DToshkov', subtitle = '  ') +
+  annotate("text", -19, 2240, label = 'Data: http://eloratings.net\n@DToshkov', hjust = 1, vjust=1, family = 'Cairo', size = 5)+ 
+  geom_text(aes(y=elos+5,label = as.character(elos)), colour='black', fontface='italic', size=4,  hjust=0)+ 
+  geom_text(aes(y = 1605, label = countries), hjust = 0, color=data.s2$tcolors, size=6) +
+  coord_flip(expand=FALSE, ylim = c(1600,max(data.s$elos)+40))+
+  theme_minimal(20) + guides(color=F,fill=F)+
+  theme(plot.title=element_text(family='Cairo', colour='black', size=34, hjust=1, vjust=5),
+        plot.caption = element_text(hjust = 1, family='Cairo', colour='darkgrey', size=14),
+        axis.ticks.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.text.x = element_text(family='Cairo'),
+        plot.margin = unit(c(30, 30, 10, 10), "points")) +
+  transition_states(year, transition_length = 2, state_length = 8) +
+  ease_aes('cubic-in-out') +   
+  enter_grow()+
+  exit_shrink()
+
+animate(p2, nframes = dim(data.s2)[1]/20*10, fps = 12, end_pause = 10, width = 900, height = 780)
+anim_save("./output graphs/top20_elos_medium.gif")
+
+# Top 10 countires --------------------------------------------------------
+data.top<-data%>%filter(year>1951)%>%group_by(countries)%>%mutate(sum_elo=sum(elos))%>%filter(year==2019)
+data.top<-data.top[order(-data.top$sum_elo),]
+top.countries<-data.top$countries[1:10]
+data.top<-data%>%filter(year>1951, countries%in%top.countries)
+
+data.top %<>% 
+  group_by(year) %>% 
+  arrange(-elos) %>% 
+  mutate(order = 1:n()) %>%
+  ungroup() %>%
+  arrange(year, -elos)
+data.top$order = as.numeric(as.character(data.top$order))
+
+temp<-data.top%>%filter(year==2019)%>%select(countries, order)%>%rename(order2019=order)
+data.top<-left_join(data.top, temp, by='countries')
+
+# variable positions of the bars
+p3 = ggplot(data.top, aes(-order, group=countries, colour=countries, fill=countries)) +
+  geom_tile(aes(y = elos/2, height = elos, width = 0.75), alpha = 0.8, color='black') +
+  scale_fill_manual(values = jColors)+
+  labs(x='', y='', title='World Football Elo Ratings of Top 10 countries:  {closest_state}',
+       caption='Data: http://eloratings.net   Author: @DToshkov', subtitle = '  ') +
+  annotate("text", -9, 2220, label = 'Data: http://eloratings.net\n@DToshkov', hjust = 1, vjust=1, family = 'Cairo', size = 5)+ 
+  geom_text(aes(y=elos+5,label = as.character(elos)), colour='black', fontface='italic', size=6,  hjust=0) +
+  geom_text(aes(y = 1545, label = countries), hjust = 0, color=data.top$tcolors, size=8) +
+  coord_flip(expand=FALSE, ylim = c(1540,max(data.top$elos)+30))+
+  theme_minimal(20) + guides(color=F,fill=F)+
+  theme(plot.title=element_text(family='Cairo', colour='black', size=30, hjust=1, vjust=5),
+        plot.caption = element_text(hjust = 1, family='Cairo', colour='darkgrey', size=14),
+        axis.ticks.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.text.x = element_text(family='Cairo'),
+        plot.margin = unit(c(30, 30, 10, 10), "points"))+  
+  transition_states(year, transition_length = 2, state_length = 8) +
+  ease_aes('cubic-in-out') +   
+  enter_grow()+
+  exit_shrink()
+
+animate(p3, nframes = dim(data.top)[1]/10*3*10+10, fps = 20, end_pause = 10, width = 1000, height = 720)
+anim_save("./output graphs/top10_10_elos.gif")
+
+# fixed positions of the bars
+p5 = ggplot(data.top, aes(-order2019, group=countries, colour=countries, fill=countries)) +
+  geom_tile(aes(y = elos/2, height = elos, width = 0.75), alpha = 0.8, color='black') +
+  scale_fill_manual(values = jColors)+
+  labs(x='', y='', title='World Football Elo Ratings of Top 10 countries:  {closest_state}',
+       caption='Data: http://eloratings.net   Author: @DToshkov', subtitle = '  ') +
+  annotate("text", -9, 2220, label = 'Data: http://eloratings.net\n@DToshkov', hjust = 1, vjust=1, family = 'Cairo', size = 5)+ 
+  geom_text(aes(y=elos+5,label = as.character(elos)), colour='black', fontface='italic', size=6,  hjust=0) +
+  geom_text(aes(y = 1515, label = countries), hjust = 0, color=data.top$tcolors, size=8) +
+  coord_flip(expand=FALSE, ylim = c(1510,max(data.top$elos)+30))+
+  theme_minimal(20) + guides(color=F,fill=F)+
+  theme(plot.title=element_text(family='Cairo', colour='black', size=30, hjust=1, vjust=5),
+        plot.caption = element_text(hjust = 1, family='Cairo', colour='darkgrey', size=14),
+        axis.ticks.y = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.text.x = element_text(family='Cairo'),
+        plot.margin = unit(c(30, 30, 10, 10), "points")) +    
+  transition_states(year, transition_length = 2, state_length = 2) +
+  ease_aes('cubic-in-out') +   
+  enter_grow()+
+  exit_shrink()
+
+animate(p5, nframes = dim(data.top)[1]/10*3*10+10, fps = 20, end_pause = 10, width = 1000, height = 720)
+anim_save("./output graphs/top10_10_fixed_elos_big.gif")
